@@ -4936,6 +4936,22 @@
 
                         <div id="saic-comment-status-893" class="saic-comment-status"></div>
 
+                        <!-- GAS RSVP: tombol Tampilkan/Sembunyikan ucapan (tema #a58f6e) -->
+                        <div class="gas-rsvp-controls" style="margin-top:14px; text-align:center;">
+                          <button type="button" id="gas-toggle-btn" class="gas-toggle-btn">
+                            <i class="fa-solid fa-comments" style="margin-right:8px;"></i>
+                            <span id="gas-toggle-text">Tampilkan Ucapan</span>
+                            <span id="gas-toggle-count" class="gas-count-badge" style="display:none;">0</span>
+                          </button>
+                        </div>
+                        <div id="gas-ucapan-wrapper" style="display:none; margin-top:18px;">
+                          <div id="gas-ucapan-loading" style="text-align:center; padding:20px; color:#6b7280; font-size:13px;">
+                            <i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;"></i>Memuat ucapan...
+                          </div>
+                          <div id="gas-ucapan-list" style="display:none;"></div>
+                          <div id="gas-ucapan-empty" style="display:none; text-align:center; padding:24px; color:#6b7280; font-size:13px; background:#fdfbf7; border:1px dashed #e6d5b8; border-radius:10px;">Belum ada ucapan. Jadilah yang pertama! 🤎</div>
+                        </div>
+
                         <ul id="saic-container-comment-893"
                           class="saic-container-comments saic-order-DESC saic-has-12-comments saic-multiple-comments"
                           data-order="DESC"></ul>
@@ -6547,6 +6563,407 @@
           if (count > 50) clearInterval(interval);
         }, 200);
       })();
+  </script>
+
+  <!-- GAS RSVP Integration - Amel & Andre -->
+  <style id="gas-rsvp-style">
+    .gas-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background-color: #a58f6e;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 22px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(165, 143, 110, 0.28);
+      min-width: 200px;
+    }
+    .gas-toggle-btn:hover {
+      background-color: #8f7a5d;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(165, 143, 110, 0.38);
+    }
+    .gas-toggle-btn:active { transform: translateY(0); }
+    .gas-toggle-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .gas-count-badge {
+      margin-left: 8px;
+      background: #ffffff;
+      color: #a58f6e;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    #saic-comment-status-893.gas-success {
+      background: #fdfbf7;
+      border: 1px solid #e6d5b8;
+      color: #5f4a2e;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 13px;
+      text-align: center;
+    }
+    #saic-comment-status-893.gas-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 13px;
+      text-align: center;
+    }
+    .gas-card {
+      background: #ffffff;
+      border: 1px solid #e8e0d0;
+      border-left: 4px solid #a58f6e;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(165,143,110,0.08);
+      text-align: left;
+    }
+    .gas-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .gas-card-nama {
+      font-weight: 700;
+      color: #3d2f1e;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+    .gas-card-meta {
+      font-size: 11px;
+      color: #8a7a65;
+      margin-top: 2px;
+    }
+    .gas-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .gas-badge-hadir { background: #fef3ec; color: #9a5a1a; border: 1px solid #e6d5b8; }
+    .gas-badge-tidak { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+    .gas-badge-ragu { background: #fef9e7; color: #8a6d00; border: 1px solid #fde68a; }
+    .gas-card-ucapan {
+      color: #4b3d2e;
+      font-size: 13.5px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .gas-card-jumlah {
+      margin-top: 8px;
+      font-size: 11.5px;
+      color: #8a7a65;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fdfbf7;
+      border: 1px solid #f0e6d3;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+    /* samakan warna tombol Kirim asli */
+    #submit-893 {
+      background-color: #a58f6e !important;
+      border-color: #a58f6e !important;
+      transition: all 0.2s ease;
+    }
+    #submit-893:hover { background-color: #8f7a5d !important; }
+    #submit-893:disabled { opacity: 0.6; cursor: not-allowed; }
+    /* guest field animasi */
+    .saic-wrap-guest { transition: all 0.2s ease; }
+  </style>
+
+  <script>
+    (function() {
+      // GANTI URL INI SETELAH DEPLOY GAS -> Deploy as web app -> Anyone
+      // Spreadsheet ID sudah hardcoded di Code.gs, jadi hanya perlu URL exec di sini
+      const GAS_URL = "https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/exec";
+      const SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/179cusuqNesQBSMpjrlZfeB0mznAd0aehxGIwt2cBnYc/edit#gid=0";
+
+      const form = document.getElementById("commentform-893");
+      const authorInput = document.getElementById("author");
+      const attendanceSelect = document.getElementById("attendance");
+      const guestSelect = document.getElementById("guest");
+      const guestWrap = document.querySelector(".saic-wrap-guest");
+      const textarea = document.getElementById("saic-textarea-893");
+      const submitBtn = document.getElementById("submit-893");
+      const statusEl = document.getElementById("saic-comment-status-893");
+      const toggleBtn = document.getElementById("gas-toggle-btn");
+      const toggleText = document.getElementById("gas-toggle-text");
+      const toggleCount = document.getElementById("gas-toggle-count");
+      const wrapper = document.getElementById("gas-ucapan-wrapper");
+      const listEl = document.getElementById("gas-ucapan-list");
+      const loadingEl = document.getElementById("gas-ucapan-loading");
+      const emptyEl = document.getElementById("gas-ucapan-empty");
+
+      let isListVisible = false;
+      let cacheData = null;
+
+      // tampilkan guest hanya jika Hadir
+      function syncGuestVisibility() {
+        if (!attendanceSelect || !guestWrap) return;
+        if (attendanceSelect.value === "present") {
+          guestWrap.style.display = "";
+        } else {
+          guestWrap.style.display = "none";
+          if (guestSelect) guestSelect.value = "";
+        }
+      }
+      if (attendanceSelect) {
+        attendanceSelect.addEventListener("change", syncGuestVisibility);
+        // inisialisasi
+        syncGuestVisibility();
+      }
+
+      function showStatus(msg, type) {
+        if (!statusEl) return;
+        statusEl.textContent = msg;
+        statusEl.className = "saic-comment-status " + (type === "success" ? "gas-success" : "gas-error");
+        statusEl.style.display = "block";
+        // auto hide setelah 5 detik untuk success
+        if (type === "success") {
+          setTimeout(() => { statusEl.style.display = "none"; statusEl.textContent = ""; }, 5000);
+        }
+      }
+
+      function badgeClass(kehadiran) {
+        const k = (kehadiran||"").toLowerCase();
+        if (k.includes("hadir") && !k.includes("tidak")) return "gas-badge-hadir";
+        if (k.includes("tidak")) return "gas-badge-tidak";
+        return "gas-badge-ragu";
+      }
+
+      function escapeHtml(s) {
+        return String(s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+      }
+
+      function renderList(data) {
+        if (!listEl) return;
+        if (!data || data.length === 0) {
+          listEl.style.display = "none";
+          emptyEl.style.display = "block";
+          loadingEl.style.display = "none";
+          if (toggleCount) { toggleCount.textContent = "0"; toggleCount.style.display = "none"; }
+          return;
+        }
+        let html = "";
+        data.forEach(item => {
+          const tamuInfo = item.jumlahTamu && item.jumlahTamu !== "-" ? `<div class="gas-card-jumlah"><i class="fa-solid fa-users" style="font-size:11px;"></i> ${escapeHtml(item.jumlahTamu)} orang</div>` : "";
+          html += `
+            <div class="gas-card">
+              <div class="gas-card-head">
+                <div>
+                  <div class="gas-card-nama">${escapeHtml(item.nama)}</div>
+                  <div class="gas-card-meta"><i class="fa-regular fa-clock" style="margin-right:4px;"></i>${escapeHtml(item.timestamp)}</div>
+                </div>
+                <span class="gas-badge ${badgeClass(item.kehadiran)}">${escapeHtml(item.kehadiran)}</span>
+              </div>
+              <div class="gas-card-ucapan">${escapeHtml(item.ucapan)}</div>
+              ${tamuInfo}
+            </div>
+          `;
+        });
+        listEl.innerHTML = html;
+        listEl.style.display = "block";
+        emptyEl.style.display = "none";
+        loadingEl.style.display = "none";
+        if (toggleCount) { toggleCount.textContent = data.length; toggleCount.style.display = "inline-block"; }
+      }
+
+      async function fetchUcapan(force) {
+        if (cacheData && !force) {
+          renderList(cacheData);
+          return;
+        }
+        if (!GAS_URL || GAS_URL.includes("xxxxxxxx")) {
+          loadingEl.style.display = "none";
+          listEl.style.display = "none";
+          emptyEl.style.display = "block";
+          emptyEl.innerHTML = `Belum dihubungkan ke Spreadsheet.<br><small style="color:#8a7a65;">Deploy <b>Code.gs</b> dulu, lalu ganti <code>GAS_URL</code> di index.html<br><a href="${SPREADSHEET_URL}" target="_blank" style="color:#a58f6e; text-decoration:underline;">Buka Spreadsheet</a></small>`;
+          return;
+        }
+        loadingEl.style.display = "block";
+        listEl.style.display = "none";
+        emptyEl.style.display = "none";
+        try {
+          const res = await fetch(GAS_URL + "?action=read", { method: "GET" });
+          const json = await res.json();
+          if (json.status === "success") {
+            cacheData = json.data || [];
+            renderList(cacheData);
+          } else {
+            throw new Error(json.message || "Gagal memuat");
+          }
+        } catch (err) {
+          console.error("[GAS] fetch error", err);
+          loadingEl.style.display = "none";
+          emptyEl.style.display = "block";
+          emptyEl.textContent = "Gagal memuat ucapan: " + err.message;
+        }
+      }
+
+      // toggle tampil/sembunyikan
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", async function() {
+          isListVisible = !isListVisible;
+          if (isListVisible) {
+            wrapper.style.display = "block";
+            toggleText.textContent = "Sembunyikan Ucapan";
+            toggleBtn.innerHTML = '<i class="fa-solid fa-eye-slash" style="margin-right:8px;"></i><span id="gas-toggle-text">Sembunyikan Ucapan</span> <span id="gas-toggle-count" class="gas-count-badge" style="display:'+(cacheData?'inline-block':'none')+'">'+(cacheData?cacheData.length:0)+'</span>';
+            // re-query karena innerHTML reset
+            const newCount = document.getElementById("gas-toggle-count");
+            if (newCount && cacheData) { newCount.textContent = cacheData.length; newCount.style.display = "inline-block"; }
+            await fetchUcapan(false);
+            // scroll ke list
+            setTimeout(()=> wrapper.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+          } else {
+            wrapper.style.display = "none";
+            toggleBtn.innerHTML = '<i class="fa-solid fa-comments" style="margin-right:8px;"></i><span id="gas-toggle-text">Tampilkan Ucapan</span> <span id="gas-toggle-count" class="gas-count-badge" style="display:'+(cacheData && cacheData.length?'inline-block':'none')+'">'+(cacheData?cacheData.length:0)+'</span>';
+          }
+        });
+        // preload count tanpa buka list
+        fetch(GAS_URL + "?action=read", { method: "GET" }).then(r=>r.json()).then(j=>{
+          if (j.status==="success" && j.data) {
+            cacheData = j.data;
+            if (toggleCount && j.data.length) { toggleCount.textContent = j.data.length; toggleCount.style.display = "inline-block"; }
+          }
+        }).catch(()=>{});
+      }
+
+      // intercept submit
+      if (form) {
+        form.addEventListener("submit", async function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          // validasi
+          const nama = (authorInput && authorInput.value || "").trim();
+          const kehadiran = (attendanceSelect && attendanceSelect.value || "").trim();
+          const ucapan = (textarea && textarea.value || "").trim();
+          const jumlah = (guestSelect && guestSelect.value || "").trim();
+
+          // reset error
+          form.querySelectorAll(".saic-error-info").forEach(el => el.style.display = "none");
+
+          let valid = true;
+          if (nama.length < 2) {
+            const err = form.querySelector(".saic-error-info-name");
+            if (err) err.style.display = "block";
+            showStatus("Masukan nama anda (minimal 2 karakter)", "error");
+            valid = false;
+          }
+          if (!kehadiran) {
+            const err = form.querySelector(".saic-error-info-attendance");
+            if (err) err.style.display = "block";
+            showStatus("Pilih konfirmasi kehadiran", "error");
+            valid = false;
+          }
+          if (kehadiran === "present" && !jumlah) {
+            const err = form.querySelector(".saic-error-info-guest");
+            if (err) err.style.display = "block";
+            showStatus("Pilih jumlah tamu", "error");
+            valid = false;
+          }
+          if (ucapan.length < 2) {
+            const err = form.querySelector(".saic-error-info-text");
+            if (err) err.style.display = "block";
+            showStatus("Ucapan minimal 2 karakter", "error");
+            valid = false;
+          }
+          if (!valid) return;
+
+          if (!GAS_URL || GAS_URL.includes("xxxxxxxx")) {
+            showStatus("Konfigurasi Spreadsheet belum selesai. Deploy Code.gs dulu dan isi GAS_URL.", "error");
+            return;
+          }
+
+          const payload = {
+            nama: nama,
+            ucapan: ucapan,
+            kehadiran: kehadiran, // present / notpresent / notsure
+            jumlahTamu: jumlah
+          };
+
+          const origText = submitBtn ? submitBtn.value : "";
+          if (submitBtn) { submitBtn.disabled = true; submitBtn.value = "Mengirim..."; }
+
+          try {
+            const res = await fetch(GAS_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+            if (json.status === "success") {
+              showStatus(json.message || "Terima kasih atas ucapan Anda! 🤎", "success");
+              form.reset();
+              syncGuestVisibility();
+              // jika auto-fill nama tamu dari URL, isi lagi
+              const guestName = (typeof getGuestName === "function" ? getGuestName() : "");
+              if (guestName && authorInput) authorInput.value = guestName;
+              cacheData = null; // invalidate
+              // jika list sedang terbuka, refresh
+              if (isListVisible) await fetchUcapan(true);
+              else {
+                // preload count
+                try {
+                  const r2 = await fetch(GAS_URL + "?action=read");
+                  const j2 = await r2.json();
+                  if (j2.status==="success") {
+                    cacheData = j2.data;
+                    const cnt = document.getElementById("gas-toggle-count");
+                    if (cnt) { cnt.textContent = j2.data.length; cnt.style.display = "inline-block"; }
+                  }
+                } catch(e){}
+              }
+            } else {
+              showStatus(json.message || "Gagal mengirim ucapan", "error");
+            }
+          } catch (err) {
+            console.error("[GAS] post error", err);
+            showStatus("Gagal mengirim: " + err.message + ". Coba lagi.", "error");
+          } finally {
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.value = origText || "Kirim"; }
+          }
+        }, true);
+      }
+
+      // cegah SAIC lama auto-load ajax ke invitimo (opsional: sembunyikan list lama)
+      const oldList = document.getElementById("saic-container-comment-893");
+      if (oldList) oldList.style.display = "none";
+      const oldHolder = document.querySelector(".saic-holder-893");
+      if (oldHolder) oldHolder.style.display = "none";
+      const oldLink = document.getElementById("saic-link-893");
+      if (oldLink) {
+        oldLink.addEventListener("click", function(e){
+          e.preventDefault();
+          const wrap = document.getElementById("saic-wrap-comment-893");
+          if (wrap) wrap.style.display = wrap.style.display === "none" ? "block" : "none";
+        });
+      }
+      // buka form otomatis (karena sebelumnya display:none)
+      const wrapComment = document.getElementById("saic-wrap-comment-893");
+      if (wrapComment) wrapComment.style.display = "block";
+    })();
   </script>
 </body>
 
