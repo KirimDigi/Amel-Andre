@@ -4857,15 +4857,15 @@
 
                       <div class="saic-wrap-link">
 
-                        <a href="index-1.htm?post_id=893&#038;comments=12&#038;get=500&#038;order=DESC"
-                          id="saic-link-893" class="saic-link saic-icon-link saic-icon-link-true auto-load-true">
+                        <a href="#"
+                          id="saic-link-893" class="saic-link saic-icon-link saic-icon-link-true" style="pointer-events:none; cursor:default;">
                           <i class="saico-comment"></i>
-                          <span>12</span>
+                          <span>0</span>
                           Ucapan </a>
 
                       </div>
 
-                      <div id="saic-wrap-comment-893" class="saic-wrap-comments" style="display: none;" data-id="893">
+                      <div id="saic-wrap-comment-893" class="saic-wrap-comments" style="display: block;" data-id="893">
 
                         <div id="saic-wrap-form-893" class="saic-wrap-form saic-clearfix">
 
@@ -6694,10 +6694,26 @@
   </style>
 
   <script>
+    // FIX CORS invitimo: override SAIC sebelum ready (blok POST ke admin-ajax)
+    window.getComments_SAIC = function(){ return false; };
+    window.insertComment_SAIC = function(){ return false; };
+    window.jPages_SAIC = function(){ return false; };
+    if (window.WDS_RSVP) { try { window.WDS_RSVP.ajaxurl = ""; window.WDS_RSVP.jPagesNum = 0; } catch(e){} }
+    // cegah jQuery SAIC auto-load & CORS
+    if (window.jQuery) {
+      try {
+        // hapus handler SAIC yang sudah terpasang
+        jQuery(function($){
+          try { $("a.saic-link").off("click"); $("body").off("click","a.saic-link"); $("body").off("submit",".saic-container-form form"); } catch(e){}
+          $("#saic-link-893 span").text("0");
+          $("#saic-wrap-comment-893").show().attr("style","display:block !important;").css("display","block");
+        });
+      } catch(e){}
+    }
     (function() {
       // GANTI URL INI SETELAH DEPLOY GAS -> Deploy as web app -> Anyone
       // Spreadsheet ID sudah hardcoded di Code.gs, jadi hanya perlu URL exec di sini
-      const GAS_URL = "https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/exec";
+      const GAS_URL = "https://script.google.com/macros/s/AKfycbzOUKRYMmyXKOiLiAylcoBAIIPU27IzArMLdki8FP4rricU0hcwSnrC0F9cGjoPGrYILw/exec";
       const SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/179cusuqNesQBSMpjrlZfeB0mznAd0aehxGIwt2cBnYc/edit#gid=0";
 
       const form = document.getElementById("commentform-893");
@@ -6759,6 +6775,9 @@
 
       function renderList(data) {
         if (!listEl) return;
+        // sync SAIC link count (reset 0 -> real count)
+        const saicSpan = document.querySelector("#saic-link-893 span");
+        if (saicSpan) saicSpan.textContent = data ? data.length : 0;
         if (!data || data.length === 0) {
           listEl.style.display = "none";
           emptyEl.style.display = "block";
@@ -6947,22 +6966,36 @@
         }, true);
       }
 
-      // cegah SAIC lama auto-load ajax ke invitimo (opsional: sembunyikan list lama)
+      // cegah SAIC lama & paksa always visible + count 0 (request user: jangan di-hide, reset 0)
       const oldList = document.getElementById("saic-container-comment-893");
-      if (oldList) oldList.style.display = "none";
+      if (oldList) { oldList.style.display = "none"; oldList.innerHTML = ""; }
       const oldHolder = document.querySelector(".saic-holder-893");
       if (oldHolder) oldHolder.style.display = "none";
+      // SAIC link: reset 0 & nonaktifkan toggle (always unhide)
       const oldLink = document.getElementById("saic-link-893");
       if (oldLink) {
-        oldLink.addEventListener("click", function(e){
-          e.preventDefault();
-          const wrap = document.getElementById("saic-wrap-comment-893");
-          if (wrap) wrap.style.display = wrap.style.display === "none" ? "block" : "none";
-        });
+        const span = oldLink.querySelector("span");
+        if (span) span.textContent = "0";
+        oldLink.style.pointerEvents = "none";
+        oldLink.style.cursor = "default";
+        // cegah SAIC handler lama
+        if (window.jQuery) {
+          try { jQuery(oldLink).off("click"); jQuery("body").off("click","a.saic-link"); } catch(e){}
+        }
+        // pastikan klik tidak hide
+        oldLink.addEventListener("click", function(e){ e.preventDefault(); e.stopImmediatePropagation(); return false; }, true);
       }
-      // buka form otomatis (karena sebelumnya display:none)
+      // paksa form & wrapper selalu tampil
       const wrapComment = document.getElementById("saic-wrap-comment-893");
-      if (wrapComment) wrapComment.style.display = "block";
+      if (wrapComment) {
+        wrapComment.style.display = "block";
+        wrapComment.style.visibility = "visible";
+        wrapComment.style.opacity = "1";
+        // cegah slideToggle menyembunyikan lagi
+        if (window.jQuery) {
+          try { jQuery(wrapComment).off(); } catch(e){}
+        }
+      }
     })();
   </script>
 </body>
