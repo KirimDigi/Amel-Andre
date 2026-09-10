@@ -3284,13 +3284,13 @@
                         <h2 class="elementor-heading-title elementor-size-default">Di Tempat</h2>
                       </div>
                     </div>
-                    <div
-                      class="elementor-element elementor-element-4b713054 elementor-align-center elementor-widget elementor-widget-button"
+                      <div
+                      class="elementor-element elementor-element-4b713054 elementor-align-center elementor-widget elementor-widget-button wds-button-cover"
                       data-id="4b713054" data-element_type="widget" data-e-type="widget" id="tombol-buka"
                       data-widget_type="button.default">
                       <div class="elementor-widget-container">
                         <div class="elementor-button-wrapper">
-                          <a class="elementor-button elementor-size-xs" role="button">
+                          <a class="elementor-button elementor-size-xs wds-button-cover" id="wds-button-cover" role="button">
                             <span class="elementor-button-content-wrapper">
                               <span class="elementor-button-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 512 512">
@@ -5077,7 +5077,7 @@
               data-settings="{&quot;_position&quot;:&quot;fixed&quot;}" data-widget_type="wds_audio.default">
               <div class="elementor-widget-container">
                 <script type="text/javascript">
-                  var WdsAudio = { "source": "url", "audio_link": "https:\/\/data.kekondangan.app\/Music%2FEd%20Sheeran%20-%20Photograph.mp3", "audio_start": "", "audio_end": "", "autoplay": false }
+                  var WdsAudio = { "source": "url", "audio_link": "MusicEd%20Sheeran%20-%20Photograph.mp3", "audio_start": "", "audio_end": "", "autoplay": false }
                 </script>
 
 
@@ -5126,8 +5126,8 @@
 
 
 
-                  <audio id="song" loop="">
-                    <source src="../MusicEd%20Sheeran%20-%20Photograph.mp3" type="audio/mp3">
+                  <audio id="song" loop="" preload="auto">
+                    <source src="MusicEd%20Sheeran%20-%20Photograph.mp3" type="audio/mpeg">
                   </audio>
 
 
@@ -5264,7 +5264,7 @@
               <script>
                 let ytMusicPlaying = false;
                 let isYT = false;
-                const discMusics = document.querySelectorAll(".elementor-icon-wrapper[id*=mute-sound] .elementor-icon i");
+                const discMusics = document.querySelectorAll("#wds_audio_play .elementor-icon, #wds_audio_pause .elementor-icon");
                 function hideAllSect() {
                   if (document.body.classList.contains('elementor-editor-active')) return;
                   const cover = document.getElementById('cover');
@@ -5338,19 +5338,32 @@
                 function _playAudio() {
                   if (!ytMusicPlaying) {
                     if (document.body.contains(document.getElementById("song"))) {
-                      document.getElementById("song").play();
+                      var songEl = document.getElementById("song");
+                      // set volume dan pastikan load
+                      songEl.volume = 0.85;
+                      var playPromise = songEl.play();
+                      if (playPromise !== undefined) {
+                        playPromise.then(function() {
+                          console.log("[audio] play success", songEl.currentSrc);
+                        }).catch(function(err) {
+                          console.error("[audio] play failed:", err);
+                          // retry once after user gesture delay
+                          setTimeout(function(){ songEl.play().catch(function(e){ console.error(e); }); }, 300);
+                        });
+                      }
                       isYT = false;
                     } else {
                       isYT = true;
                       jQuery("iframe").each(function () {
                         if (this.id === 'youtube-player') jQuery(this)[0].contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*')
-                        //jQuery("#ytSound").animate({ bottom: "0px"}, 1500);
                       });
                     }
                     ytMusicPlaying = true;
                     discMusics.forEach((disc) => {
                       disc.classList.add('audioRotate');
                     })
+                    // sync wds_audio UI
+                    try { jQuery("#wds_audio_play").hide(); jQuery("#wds_audio_pause").show(); } catch(e){}
                   }
                 }
                 function _pauseAudio() {
@@ -5362,15 +5375,14 @@
                       isYT = true;
                       jQuery("iframe").each(function () {
                         if (this.id === 'youtube-player') jQuery(this)[0].contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-                        //jQuery("#ytSound").animate({ bottom: "-320px"}, 1500);
                       });
                     }
                     ytMusicPlaying = false;
                     discMusics.forEach((disc) => {
                       disc.classList.remove('audioRotate');
                     })
+                    try { jQuery("#wds_audio_play").show(); jQuery("#wds_audio_pause").hide(); } catch(e){}
                   } else {
-
                     _playAudio()
                   }
                 }
@@ -5655,7 +5667,7 @@
           <div class="elementor-element elementor-element-1321f46 elementor-widget elementor-widget-text-editor"
             data-id="1321f46" data-element_type="widget" data-e-type="widget" data-widget_type="text-editor.default">
             <div class="elementor-widget-container">
-              Made with â¤ï¸KirimDigi </div>
+              Made with 🤎 KirimDigi </div>
           </div>
           <div class="elementor-element elementor-element-0e1e4d1 elementor-widget elementor-widget-html"
             data-id="0e1e4d1" data-element_type="widget" data-e-type="widget" data-widget_type="html.default">
@@ -6353,13 +6365,20 @@
 
   <script>
     const wdpAudio = document.body.contains(document.getElementById('song')) ? document.getElementById('song') : false;
+    // sinkron dengan ytMusicPlaying agar tidak auto-play setelah user pause
     document.addEventListener("visibilitychange", event => {
+      if (typeof ytMusicPlaying !== 'undefined' && !ytMusicPlaying) return;
       if (document.visibilityState === "visible") {
-        wdpAudio && wdpAudio.play();
+        wdpAudio && wdpAudio.play().catch(function(e){ console.log("[wdpAudio] visibility play blocked", e); });
       } else {
         wdpAudio && wdpAudio.pause();
       }
     })
+    // debug helper: cek 404
+    if (wdpAudio) {
+      wdpAudio.addEventListener('error', function(e){ console.error("[audio] error src=", wdpAudio.currentSrc || wdpAudio.src, e); });
+      wdpAudio.addEventListener('canplay', function(){ console.log("[audio] canplay", wdpAudio.currentSrc); });
+    }
   </script>
   <style id="e-addons-template-dynamic-1fcf13a3-inline">
     .elementor:is(.e-post-893, .e-loop-item-893) .elementor-element.elementor-element-1fcf13a3:not(.elementor-motion-effects-element-type-background),
